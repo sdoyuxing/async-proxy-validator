@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "outDir": "lib",
+    "module": "ESNext",
+    "target": "ES2020",
+    "lib": ["es2016", "dom", "es5"],
+    "jsx": "preserve",
+    "resolveJsonModule": true,
+    "experimentalDecorators": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "declaration": true,
+    "strictFunctionTypes": true,
+    "strict": true,
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "node"
+  },
+  "include": ["src/"],
+  "exclude": ["node_modules/"]
+}

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title></title>
+  </head>
+
+  <body>
+    <div id="app">1111111111111</div>
+    <script src="./index.js"></script>
+    <script>
+      // var data = new ProxyValidator({
+      //   name: {
+      //     type: "number",
+      //     required: true,
+      //     message: "姓名必填",
+      //     validator: function () {
+      //       return "validator is false";
+      //     },
+      //   },
+      // });
+      // console.log(data.source);
+      // data.source.name = undefined;
+      // data.validate().then(
+      //   (data) => {
+      //     console.log(data);
+      //   },
+      //   (err) => {
+      //     console.log(err);
+      //   }
+      // );
+      const validator = new ProxyValidator(
+        {
+          v: {
+            required: true,
+            type: "string",
+          },
+        },
+        { v: "https://www.baidu.com" }
+      );
+      validator.source.v = "";
+      validator.validate((data) => {
+        console.log(data);
+      });
+    </script>
+  </body>
+</html>

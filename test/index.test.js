@@ -243,3 +243,13 @@ test("test email", () => {
     expect(data.v.join()).toBe("v必须是email");
   });
 });
+
+test("test transform", () => {
+  const validator = new ProxyValidator({
+    v: [
+      { type: "number", message: "v必须是数字", transform: (val) => val * 10 },
+    ],
+  });
+  validator.source.v = 1;
+  expect(validator.source.v).toBe(10)
+});

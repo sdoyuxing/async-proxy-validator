@@ -1,15 +1,15 @@
 import { internalType, Obj, Rule, Rules } from "../interface";
 import { initValue } from "../utils";
 import typesValidator from "../types";
-import { Queue } from "./queue";
+import { JobQueue } from "./queue";
 const proxyMap = new WeakMap<Rules, any>();
 class Validator {
   proxy: Obj;
-  queue: Queue;
+  queue: JobQueue;
   private _rules: Rules = {};
   private _error: Obj = {};
   constructor(rules: Rules, refValue?: any) {
-    this.queue = new Queue();
+    this.queue = new JobQueue();
     this._rules = rules;
     const existingProxy = proxyMap.get(rules);
     if (existingProxy) {
@@ -32,6 +32,9 @@ class Validator {
     if (target.hasOwnProperty(key)) {
       let type =
         (<Rule[]>this._rules[key]).find((rule) => rule.type)?.type ?? "string";
+      let transform = (<Rule[]>this._rules[key]).find(
+        (rule) => rule.transform
+      )?.transform;
       type ||= "string";
       const validate = () => {
         const validator = new typesValidator[<internalType>type](
@@ -47,6 +50,10 @@ class Validator {
       };
       const job = { field: key, validate };
       this.queue.queueJob(job);
+      if (transform) {
+        value = transform(value);
+      }
+      if(type==='string') (<string>value).trim()
       return Reflect.set(target, key, value, proxy);
     } else {
       throw Error(`${key} is not a valid property`);

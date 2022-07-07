@@ -6,8 +6,10 @@ export type Rule = {
   type?: string;
   message?: string;
   validator?: (val: unknown) => string;
+  transform?: (val: any) => any;
+  pattern?:string|RegExp
 };
-export type Rules = Record<string, Rule[]|Rule>;
+export type Rules = Record<string, Rule[] | Rule>;
 export type Obj = Record<string, any>;
 export type initType = String | Number | Obj | null;
 export interface ValidateType {
@@ -24,7 +26,7 @@ export type internalType =
   | "date"
   | "url"
   | "email";
-  
+
 export interface ValidateMessages {
   required: string;
   len: string;
@@ -74,4 +76,8 @@ export interface ValidateMessages {
 }
 export interface ValidateOptions {
   messages: ValidateMessages;
+}
+export interface Job {
+  field: string;
+  validate: () => Obj|undefined;
 }

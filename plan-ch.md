@@ -21,8 +21,14 @@
 ## 0.0.5/2022-07-04
 - github上线第一个版本
 
-## 0.1.0
+
+## 0.1.0/2022-07-04
 - Transform
-- Deep Rules
 - Whitespace 空格处理
 - 文件命名优化
+- 优化queue
+
+## 0.1.1/2022-07-07
+- pattern
+- npm上线第一版
+- 优化readme文件

@@ -5,7 +5,7 @@
 ## 安装
 
 ```bash
-npm i async-validator
+npm i proxy-validator
 ```
 
 ## 使用

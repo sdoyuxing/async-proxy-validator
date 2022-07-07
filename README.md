@@ -83,36 +83,3 @@ const descriptor = {
 
 通过`len`属性设置长度，作用在`array`和`string`类型。
 
-#### validator
-
-You can custom validate function for specified field:
-
-```js
-const fields = {
-  field: {
-    validator(rule, value, callback) {
-      return value === 'test';
-    },
-    message: 'Value is not equal to "test".',
-  },
-
-  field2: {
-    validator(rule, value, callback) {
-      return new Error(`${value} is not equal to 'test'.`);
-    },
-  },
- 
-  arrField: {
-    validator(rule, value) {
-      return [
-        new Error('Message 1'),
-        new Error('Message 2'),
-      ];
-    },
-  },
-};
-```
-
-## License
-
-Everything is [MIT](https://en.wikipedia.org/wiki/MIT_License).

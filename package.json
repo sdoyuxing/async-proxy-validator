@@ -2,7 +2,9 @@
   "name": "proxy-validator",
   "version": "0.1.0",
   "description": "",
-  "main": "index.js",
+  "types": "dist/dist-types/index.d.ts",
+  "main": "dist/dist-web/index.js",
+  "module": "dist/dist-esm/index.js",
   "scripts": {
     "test": "jest",
     "build": "rollup -c",

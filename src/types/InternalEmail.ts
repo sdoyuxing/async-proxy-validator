@@ -19,6 +19,7 @@ export default class InternalEmail extends MainType {
       this.validateRequired();
       if (!isEmptyValue(this._value))
         this.validateTypes() && this.validateLen();
+      if (this._rule.pattern) this.validatePattern();
       if (this._rule.validator)
         this.error.push(this._rule.validator(this._value));
     }

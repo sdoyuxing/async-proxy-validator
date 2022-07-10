@@ -53,7 +53,7 @@ class Validator {
       if (transform) {
         value = transform(value);
       }
-      if(type==='string') (<string>value).trim()
+      if(type==='string') String.prototype.trim.call(value)
       return Reflect.set(target, key, value, proxy);
     } else {
       throw Error(`${key} is not a valid property`);

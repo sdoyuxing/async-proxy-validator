@@ -200,7 +200,7 @@ test("test Date", () => {
     v: [
       { type: "date", message: "v必须是日期类型" },
       {
-        max: new Date(),
+        max: new Date("2022-07-07"),
         message: "v必须小于今天",
       },
       { min: new Date("2022-07-03"), message: "v必须大于昨天" },
@@ -222,7 +222,7 @@ test("test Date", () => {
     v: [
       { type: "date", message: "v必须是日期类型" },
       {
-        max: new Date(),
+        max: new Date("2022-07-07"),
         min: new Date("2022-07-03"),
         message: "v必须在明天天和昨天之间",
       },
@@ -251,5 +251,15 @@ test("test transform", () => {
     ],
   });
   validator.source.v = 1;
-  expect(validator.source.v).toBe(10)
+  expect(validator.source.v).toBe(10);
+});
+
+test("test pattern", () => {
+  const validator = new ProxyValidator({
+    v: [{ type: "string" }, { pattern: "^d{5}$", message: "只能是五位数字" }],
+  });
+  validator.source.v = "1234";
+  validator.validate((data) => {
+    expect(data.v.join()).toBe("只能是五位数字");
+  });
 });

@@ -83,7 +83,7 @@
         return typeOf(val) === "string";
       },
       date(val) {
-        return typeOf(val) === "date" || !isNaN(new Date(val).getTime());
+        return typeOf(val) === "date" && !isNaN(val.getTime());
       },
       url(val) {
         return typeOf(val) === "string" && urlPattern.test(val);
@@ -119,38 +119,51 @@
   };
 
   function isNumOrDate(val) {
-    return typeOf(val) === "number" || typeOf(val) === "Date";
+    return typeOf(val) === "number" || typeOf(val) === "date";
   }
   const value = (val, valOptin) => {
     if (isNumOrDate(val)) {
-      val = typeOf(val) === "Date" ? val.getTime() : val;
-      const max = isNumOrDate(valOptin.max) && typeOf(valOptin.max) === "Date" ? valOptin.max.getTime() : valOptin.max;
-      const min = isNumOrDate(valOptin.min) && typeOf(valOptin.min) === "Date" ? valOptin.min.getTime() : valOptin.min;
-      if (max && !min && val > max) {
+      val = typeOf(val) === "date" ? val.getTime() : val;
+      const max = isNumOrDate(valOptin.max) && typeOf(valOptin.max) === "date" ? valOptin.max.getTime() : valOptin.max;
+      const min = isNumOrDate(valOptin.min) && typeOf(valOptin.min) === "date" ? valOptin.min.getTime() : valOptin.min;
+      if (max && !min && val >= max) {
         return "max";
-      } else if (min && !max && val < min) {
+      } else if (min && !max && val <= min) {
         return "min";
-      } else if (min && max && (max < val || val < min)) {
+      } else if (min && max && (max <= val || val <= min)) {
         return "between";
       }
     }
     return "";
   };
 
+  const pattern = (val, pattern2) => {
+    let _pattern;
+    if (pattern2 instanceof RegExp) {
+      _pattern = pattern2;
+    }
+    if (typeOf(pattern2) === "string") {
+      _pattern = new RegExp(pattern2);
+    }
+    return _pattern == null ? void 0 : _pattern.test(val);
+  };
+
   var rule = {
     type,
     required,
     len,
-    val: value
+    val: value,
+    pattern
   };
 
   class MainType {
     constructor(rule2, value, field) {
       this._message = {};
       this.error = [];
+      this._rules = [];
       this._rule = {};
       this._field = "";
-      Object.assign(this, { _rule: rule2, _value: value, _field: field });
+      Object.assign(this, { _rules: rule2, _value: value, _field: field });
     }
     validate() {
       return true;
@@ -160,7 +173,9 @@
     validateRequired() {
       if (this._rule.required && !rule.required(this._value)) {
         this.error.push(this._rule.message || messageFormat(this._message.required, this._field));
+        return false;
       }
+      return true;
     }
     validateLen() {
       const { len, max, min } = this._rule;
@@ -171,11 +186,16 @@
           min
         });
         if (messageType) {
-          this.error.push(messageFormat(this._message[messageType], this._field, ...[len, max, min].filter((item) => item)));
+          this.error.push(messageFormat(this._rule.message || this._message[messageType], this._field, ...[len, max, min].filter((item) => item)));
         }
       }
     }
     validateValue() {
+    }
+    validatePattern() {
+      if (!rule.pattern(this._value, this._rule.pattern)) {
+        this.error.push(this._rule.message || messageFormat(this._message.pattern, this._field));
+      }
     }
   }
 
@@ -211,25 +231,31 @@
       }, message);
     }
     validate() {
-      this.validateRequired();
-      if (!isEmptyValue(this._value))
-        this.validateTypes();
-      this.validateValue();
-      if (this._rule.validator)
-        this.error.push(this._rule.validator(this._value));
+      for (let rule2 of this._rules) {
+        if (this.error.length > 0)
+          break;
+        this._rule = rule2;
+        this.validateRequired();
+        if (!isEmptyValue(this._value))
+          this.validateTypes() && this.validateValue();
+        if (this._rule.validator)
+          this.error.push(this._rule.validator(this._value));
+      }
       return this.error.length === 0;
     }
     validateTypes() {
       if (!rule.type(this._value, "number")) {
         this.error.push(this._rule.message || messageFormat(this._message.type, this._field));
+        return false;
       }
+      return true;
     }
     validateValue() {
       const { len, max, min } = this._rule;
       if (len || max || min) {
         const messageType = rule.val(this._value, { max, min });
         if (messageType) {
-          this.error.push(messageFormat(this._message[messageType], this._field, ...[max, min].filter((item) => item)));
+          this.error.push(this._rule.message || messageFormat(this._message[messageType], this._field, ...[max, min].filter((item) => item)));
         }
       }
     }
@@ -259,16 +285,22 @@
       }, message);
     }
     validate() {
-      this.validateRequired();
-      if (!isEmptyValue(this._value))
-        this.validateTypes();
-      if (this._rule.validator)
-        this.error.push(this._rule.validator(this._value));
+      for (let rule2 of this._rules) {
+        if (this.error.length > 0)
+          break;
+        this._rule = rule2;
+        if (this.validateRequired()) {
+          if (!isEmptyValue(this._value))
+            this.validateTypes();
+          if (this._rule.validator)
+            this.error.push(this._rule.validator(this._value));
+        }
+      }
       return this.error.length === 0;
     }
     validateTypes() {
       if (!rule.type(this._value, "boolean")) {
-        this.error.push(messageFormat(this._message.type, this._field));
+        this.error.push(this._rule.message || messageFormat(this._message.type, this._field));
       }
     }
   }
@@ -300,18 +332,25 @@
       }, message);
     }
     validate() {
-      this.validateRequired();
-      if (!isEmptyValue(this._value))
-        this.validateTypes();
-      this.validateLen();
-      if (this._rule.validator)
-        this.error.push(this._rule.validator(this._value));
+      for (let rule2 of this._rules) {
+        if (this.error.length > 0)
+          break;
+        this._rule = rule2;
+        if (this.validateRequired()) {
+          if (!isEmptyValue(this._value))
+            this.validateTypes() && this.validateLen();
+          if (this._rule.validator)
+            this.error.push(this._rule.validator(this._value));
+        }
+      }
       return this.error.length === 0;
     }
     validateTypes() {
       if (!rule.type(this._value, "array")) {
-        this.error.push(messageFormat(this._message.type, this._field));
+        this.error.push(this._rule.message || messageFormat(this._message.type, this._field));
+        return false;
       }
+      return true;
     }
   }
 
@@ -338,22 +377,31 @@
         type: "%s is not a string",
         between: "%s length must be between %s and %s",
         max: "%s length must be less than %s",
-        min: "%s length must be greater than %s"
+        min: "%s length must be greater than %s",
+        pattern: "%s does not match pattern"
       }, message);
     }
     validate() {
-      this.validateRequired();
-      if (!isEmptyValue(this._value))
-        this.validateTypes();
-      this.validateLen();
-      if (this._rule.validator)
-        this.error.push(this._rule.validator(this._value));
+      for (let rule2 of this._rules) {
+        if (this.error.length > 0)
+          break;
+        this._rule = rule2;
+        this.validateRequired();
+        if (!isEmptyValue(this._value))
+          this.validateTypes() && this.validateLen();
+        if (this._rule.pattern)
+          this.validatePattern();
+        if (this._rule.validator)
+          this.error.push(this._rule.validator(this._value));
+      }
       return this.error.length === 0;
     }
     validateTypes() {
       if (!rule.type(this._value, "string")) {
-        this.error.push(messageFormat(this._message.type, this._field));
+        this.error.push(this._rule.message || messageFormat(this._message.type, this._field));
+        return false;
       }
+      return true;
     }
   }
 
@@ -384,25 +432,31 @@
       }, message);
     }
     validate() {
-      this.validateRequired();
-      if (!isEmptyValue(this._value))
-        this.validateTypes();
-      this.validateValue();
-      if (this._rule.validator)
-        this.error.push(this._rule.validator(this._value));
+      for (let rule2 of this._rules) {
+        if (this.error.length > 0)
+          break;
+        this._rule = rule2;
+        this.validateRequired();
+        if (!isEmptyValue(this._value))
+          this.validateTypes() && this.validateValue();
+        if (this._rule.validator)
+          this.error.push(this._rule.validator(this._value));
+      }
       return this.error.length === 0;
     }
     validateTypes() {
       if (!rule.type(this._value, "date")) {
-        this.error.push(messageFormat(this._message.type, this._field));
+        this.error.push(this._rule.message || messageFormat(this._message.type, this._field));
+        return false;
       }
+      return true;
     }
     validateValue() {
       const { max, min } = this._rule;
       if (max || min) {
         const messageType = rule.val(this._value, { max, min });
         if (messageType) {
-          this.error.push(messageFormat(this._message[messageType], this._field, ...[max, min].filter((item) => item).map((item) => new Date(item).toString())));
+          this.error.push(messageFormat(this._rule.message || this._message[messageType], this._field, ...[max, min].filter((item) => item).map((item) => new Date(item).toString())));
         }
       }
     }
@@ -432,18 +486,26 @@
       }, message);
     }
     validate() {
-      this.validateRequired();
-      if (!isEmptyValue(this._value))
-        this.validateTypes();
-      this.validateLen();
-      if (this._rule.validator)
-        this.error.push(this._rule.validator(this._value));
+      for (let rule2 of this._rules) {
+        if (this.error.length > 0)
+          break;
+        this._rule = rule2;
+        this.validateRequired();
+        if (!isEmptyValue(this._value))
+          this.validateTypes() && this.validateLen();
+        if (this._rule.pattern)
+          this.validatePattern();
+        if (this._rule.validator)
+          this.error.push(this._rule.validator(this._value));
+      }
       return this.error.length === 0;
     }
     validateTypes() {
       if (!rule.type(this._value, "email")) {
-        this.error.push(messageFormat(this._message.type, this._field));
+        this.error.push(this._rule.message || messageFormat(this._message.type, this._field));
+        return false;
       }
+      return true;
     }
   }
 
@@ -471,18 +533,26 @@
       }, message);
     }
     validate() {
-      this.validateRequired();
-      if (!isEmptyValue(this._value))
-        this.validateTypes();
-      this.validateLen();
-      if (this._rule.validator)
-        this.error.push(this._rule.validator(this._value));
+      for (let rule2 of this._rules) {
+        if (this.error.length > 0)
+          break;
+        this._rule = rule2;
+        this.validateRequired();
+        if (!isEmptyValue(this._value))
+          this.validateTypes() && this.validateLen();
+        if (this._rule.pattern)
+          this.validatePattern();
+        if (this._rule.validator)
+          this.error.push(this._rule.validator(this._value));
+      }
       return this.error.length === 0;
     }
     validateTypes() {
       if (!rule.type(this._value, "url")) {
-        this.error.push(messageFormat(this._message.type, this._field));
+        this.error.push(this._rule.message || messageFormat(this._message.type, this._field));
+        return false;
       }
+      return true;
     }
   }
 
@@ -497,51 +567,96 @@
   };
 
   class Queue {
+    constructor(field) {
+      this.map = /* @__PURE__ */ new Map();
+      this.head = 0;
+      this.tail = 0;
+      this.indexMap = /* @__PURE__ */ new Map();
+      this.field = field;
+    }
+    clear() {
+      this.map.clear();
+    }
+    enqueue(value) {
+      if (!Array.isArray(value))
+        value = [value];
+      value.forEach((item) => {
+        if (this.field && typeof value === "object" && value.hasOwnProperty(this.field))
+          this.indexMap.set(value[this.field], this.tail);
+        this.map.set(this.tail++, item);
+      });
+    }
+    dequeue() {
+      const item = this.map.get(this.head);
+      this.map.delete(this.head++);
+      return item;
+    }
+    find(field) {
+      if (typeof field === "number")
+        return this.map.get(field);
+      if (typeof field === "string" && this.field)
+        return this.map.get(this.indexMap.get(field));
+    }
+    get length() {
+      return this.map.size;
+    }
+    *[Symbol.iterator]() {
+      let current = this.map.get(this.head);
+      while (current) {
+        yield current;
+        current = this.map.get(++this.head);
+      }
+    }
+  }
+  class JobQueue {
     constructor() {
-      this.isFlushPending = false;
       this.currentFlushPromise = Promise.resolve();
-      this.queue = [];
-      this.set = /* @__PURE__ */ new Set();
+      this.queue = new Queue();
     }
     queueJob(job) {
-      const internalJob = this.queue.find((item) => item.field === job.field);
+      const internalJob = this.queue.find(job.field);
       if (internalJob) {
         internalJob.validate = job.validate;
       } else {
-        this.queue.push(job);
+        this.queue.enqueue(job);
       }
-      this.queueFlush();
     }
     queueFlush() {
-      if (!this.isFlushPending) {
-        this.isFlushPending = true;
-        this.currentFlushPromise = Promise.resolve().then(() => {
-          this.flushJobs();
-        });
-      }
-    }
-    flushJobs() {
-      this.isFlushPending = false;
-      if (this.queue.length > 0) {
-        let result = "";
+      const implementQueue = new Queue();
+      implementQueue.enqueue([...this.queue]);
+      this.queue.clear();
+      this.currentFlushPromise = Promise.resolve().then(() => {
         try {
-          for (let i = 0; i < this.queue.length; i++) {
-            result = this.queue[i].validate();
-            this.queue.splice(i, 1);
-            i > 0 && i--;
-          }
+          this.flushJobs(implementQueue);
         } catch (error) {
-          console.error(error);
           throw error;
         }
-        if (result)
-          throw result;
+      });
+    }
+    flushJobs(implementQueue) {
+      if (implementQueue.length > 0) {
+        let result = {};
+        let error;
+        try {
+          for (let queueItem of implementQueue) {
+            result = queueItem.validate();
+          }
+        } catch (error2) {
+          console.error(error2);
+          throw error2;
+        }
+        error = deepCopy(result);
+        for (let key in result) {
+          result[key].length = 0;
+        }
+        if (error)
+          throw error;
       }
     }
     nextTick(fn) {
+      this.queueFlush();
       const p = this.currentFlushPromise;
-      if (fn && !this.set.has(fn)) {
-        this.set.add(fn);
+      if (fn) {
         p.then(this ? fn.bind(this) : fn, fn);
       }
       return p;
@@ -553,7 +668,7 @@
     constructor(rules, refValue) {
       this._rules = {};
       this._error = {};
-      this.queue = new Queue();
+      this.queue = new JobQueue();
       this._rules = rules;
       const existingProxy = proxyMap.get(rules);
       if (existingProxy) {
@@ -573,22 +688,27 @@
       }, {});
     }
     set(target, key, value, proxy) {
+      var _a, _b, _c;
       if (target.hasOwnProperty(key)) {
-        this._rules[key].forEach((rule) => {
-          let { type } = rule;
-          type || (type = "string");
-          const validate = () => {
-            var _a;
-            const validator = new typesValidator[type](rule, value, key);
-            if (!validator.validate()) {
-              (_a = this._error)[key] || (_a[key] = []);
-              this._error[key].push(...validator.error);
-              return this._error;
-            }
-          };
-          const job = { field: key, validate };
-          this.queue.queueJob(job);
-        });
+        let type = (_b = (_a = this._rules[key].find((rule) => rule.type)) == null ? void 0 : _a.type) != null ? _b : "string";
+        let transform = (_c = this._rules[key].find((rule) => rule.transform)) == null ? void 0 : _c.transform;
+        type || (type = "string");
+        const validate = () => {
+          var _a2;
+          const validator = new typesValidator[type](this._rules[key], value, key);
+          if (!validator.validate()) {
+            (_a2 = this._error)[key] || (_a2[key] = []);
+            this._error[key].push(...validator.error);
+            return this._error;
+          }
+        };
+        const job = { field: key, validate };
+        this.queue.queueJob(job);
+        if (transform) {
+          value = transform(value);
+        }
+        if (type === "string")
+          String.prototype.trim.call(value);
         return Reflect.set(target, key, value, proxy);
       } else {
         throw Error(`${key} is not a valid property`);

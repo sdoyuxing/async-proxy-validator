@@ -10,6 +10,7 @@ export default class InternalString extends MainType {
     between: "%s length must be between %s and %s",
     max: "%s length must be less than %s",
     min: "%s length must be greater than %s",
+    pattern: "%s does not match pattern",
     ...message,
   };
   constructor(rule: Rule[], value: any, field: string) {
@@ -22,6 +23,7 @@ export default class InternalString extends MainType {
       this.validateRequired();
       if (!isEmptyValue(this._value))
         this.validateTypes() && this.validateLen();
+      if (this._rule.pattern) this.validatePattern();
       if (this._rule.validator)
         this.error.push(this._rule.validator(this._value));
     }

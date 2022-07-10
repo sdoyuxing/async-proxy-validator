@@ -45,4 +45,11 @@ export default class MainType implements ValidateType {
     }
   }
   validateValue() {}
+  validatePattern() {
+    if (!rule.pattern(this._value, this._rule.pattern!)) {
+      this.error.push(
+        this._rule.message || messageFormat(this._message.pattern, this._field)
+      );
+    }
+  }
 }

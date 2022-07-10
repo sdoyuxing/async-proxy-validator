@@ -1,10 +1,10 @@
 {
   "name": "async-proxy-validator",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "",
-  "types": "dist/dist-types/index.d.ts",
-  "main": "dist/dist-web/index.js",
-  "module": "dist/dist-esm/index.js",
+  "types": "dist/dist-types/bundle.d.ts",
+  "main": "dist/dist-web/bundle.js",
+  "module": "dist/dist-esm/bundle.js",
   "scripts": {
     "test": "jest",
     "build": "rollup -c",
@@ -13,6 +13,14 @@
   },
   "author": "",
   "license": "MIT",
+  "homepage": "https://github.com/sdoyuxing/async-proxy-validator",
+  "bugs": {
+    "url": "https://github.com/sdoyuxing/async-proxy-validator/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com/sdoyuxing/async-proxy-validator.git"
+  },
   "devDependencies": {
     "@babel/core": "^7.18.2",
     "@babel/preset-env": "^7.18.2",

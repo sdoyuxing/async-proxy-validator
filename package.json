@@ -1,6 +1,6 @@
 {
   "name": "async-proxy-validator",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "",
   "types": "dist/dist-types/bundle.d.ts",
   "main": "dist/dist-web/bundle.js",
@@ -9,7 +9,7 @@
     "test": "jest",
     "build": "rollup -c",
     "dev:umd": "rollup -c ./rollup.dev.config.js -w",
-    "test:time":"node ./test/index.js"
+    "test:time": "node ./test/index.js"
   },
   "author": "",
   "license": "MIT",
@@ -41,5 +41,8 @@
     "ts-jest": "^28.0.5",
     "tslib": "^2.4.0",
     "typescript": "^4.7.3"
+  },
+  "dependencies": {
+    "async-proxy-validator": "^0.1.2"
   }
 }

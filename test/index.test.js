@@ -263,3 +263,45 @@ test("test pattern", () => {
     expect(data.v.join()).toBe("只能是五位数字");
   });
 });
+
+test("test error", () => {
+  const validaotor = new ProxyValidator({ v: [{ type: "string" }] });
+  validaotor.source.v = "123";
+  validaotor
+    .validate((data) => {
+      throw new Error("测试错误！");
+    })
+    .then(
+      () => {},
+      (error) => {
+        expect(error.message).toBe("测试错误！");
+      }
+    );
+});
+
+test("test source error", () => {
+  const validaotor = new ProxyValidator({ v: [{ type: "string" }] });
+  validaotor.source.v = 123;
+  validaotor.validate((data) => {
+    expect(validaotor.source.error.v[0]).toBe("v is not a string");
+  });
+});
+
+test("test linkage field", () => {
+  const validaotor = new ProxyValidator({
+    v: [
+      {
+        type: "number",
+        validator(val, target) {
+          if (val > target.a) return "v必须比a小";
+        },
+      },
+    ],
+    a: [{ type: "number" }],
+  });
+  validaotor.source.v = 10;
+  validaotor.source.a = 5;
+  validaotor.validate((data) => {
+    expect(validaotor.source.error.v[0]).toBe("v必须比a小");
+  });
+});

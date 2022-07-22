@@ -102,8 +102,18 @@ export class JobQueue {
     this.queueFlush();
     const p = this.currentFlushPromise;
     if (fn) {
-      p.then(this ? fn.bind(this) : fn, fn);
+      return p.then(this ? fn.bind(this) : fn, fn);
     }
     return p;
+  }
+  loopTick() {
+    this.currentFlushPromise.then(
+      () => {
+        if (this.queue.length) {
+          this.nextTick();
+        }
+      },
+      () => {}
+    );
   }
 }

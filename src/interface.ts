@@ -5,7 +5,7 @@ export type Rule = {
   min?: number | Date;
   type?: string;
   message?: string;
-  validator?: (val: unknown) => string;
+  validator?: (val: unknown,source:Obj) => string;
   transform?: (val: any) => any;
   pattern?:string|RegExp
 };

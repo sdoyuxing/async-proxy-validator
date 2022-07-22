@@ -9,8 +9,8 @@ export default class InternalEmail extends MainType {
     type: "%s is not a email",
     ...message,
   };
-  constructor(rule: Rule[], value: any, field: string) {
-    super(rule, value, field);
+  constructor(rule: Rule[], value: any, field: string,target:Obj) {
+    super(rule, value, field,target);
   }
   validate(): boolean {
     for (let rule of this._rules) {
@@ -21,7 +21,7 @@ export default class InternalEmail extends MainType {
         this.validateTypes() && this.validateLen();
       if (this._rule.pattern) this.validatePattern();
       if (this._rule.validator)
-        this.error.push(this._rule.validator(this._value));
+        this.error.push(this._rule.validator(this._value,this._target));
     }
     return this.error.length === 0;
   }

@@ -12,8 +12,8 @@ export default class InternalDate extends MainType {
     min: "%s must be greater than %s",
     ...message,
   };
-  constructor(rule: Rule[], value: any, field: string) {
-    super(rule, value, field);
+  constructor(rule: Rule[], value: any, field: string,target:Obj) {
+    super(rule, value, field,target);
   }
   validate(): boolean {
     for (let rule of this._rules) {
@@ -23,7 +23,7 @@ export default class InternalDate extends MainType {
       if (!isEmptyValue(this._value))
         this.validateTypes() && this.validateValue();
       if (this._rule.validator)
-        this.error.push(this._rule.validator(this._value));
+        this.error.push(this._rule.validator(this._value,this._target));
     }
     return this.error.length === 0;
   }

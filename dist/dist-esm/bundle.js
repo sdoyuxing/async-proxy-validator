@@ -129,21 +129,39 @@ const value = (val, valOptin) => {
   return "";
 };
 
+const pattern = (val, pattern2) => {
+  let _pattern;
+  if (pattern2 instanceof RegExp) {
+    _pattern = pattern2;
+  }
+  if (typeOf(pattern2) === "string") {
+    _pattern = new RegExp(pattern2);
+  }
+  return _pattern?.test(val);
+};
+
 var rule = {
   type,
   required,
   len,
-  val: value
+  val: value,
+  pattern
 };
 
 class MainType {
-  constructor(rule2, value, field) {
+  constructor(rule2, value, field, target) {
     this._message = {};
     this.error = [];
     this._rules = [];
     this._rule = {};
     this._field = "";
-    Object.assign(this, { _rules: rule2, _value: value, _field: field });
+    this._target = {};
+    Object.assign(this, {
+      _rules: rule2,
+      _value: value,
+      _field: field,
+      _target: target
+    });
   }
   validate() {
     return true;
@@ -172,6 +190,11 @@ class MainType {
   }
   validateValue() {
   }
+  validatePattern() {
+    if (!rule.pattern(this._value, this._rule.pattern)) {
+      this.error.push(this._rule.message || messageFormat(this._message.pattern, this._field));
+    }
+  }
 }
 
 var message = {
@@ -180,8 +203,8 @@ var message = {
 };
 
 class InternalNumber extends MainType {
-  constructor(rule2, value, field) {
-    super(rule2, value, field);
+  constructor(rule2, value, field, target) {
+    super(rule2, value, field, target);
     this._message = {
       type: "%s is not a number",
       between: "%s must be between %s and %s",
@@ -199,7 +222,7 @@ class InternalNumber extends MainType {
       if (!isEmptyValue(this._value))
         this.validateTypes() && this.validateValue();
       if (this._rule.validator)
-        this.error.push(this._rule.validator(this._value));
+        this.error.push(this._rule.validator(this._value, this._target));
     }
     return this.error.length === 0;
   }
@@ -222,8 +245,8 @@ class InternalNumber extends MainType {
 }
 
 class InternalBoolean extends MainType {
-  constructor(rule2, value, field) {
-    super(rule2, value, field);
+  constructor(rule2, value, field, target) {
+    super(rule2, value, field, target);
     this._message = {
       type: "%s is not a boolean",
       ...message
@@ -238,7 +261,7 @@ class InternalBoolean extends MainType {
         if (!isEmptyValue(this._value))
           this.validateTypes();
         if (this._rule.validator)
-          this.error.push(this._rule.validator(this._value));
+          this.error.push(this._rule.validator(this._value, this._target));
       }
     }
     return this.error.length === 0;
@@ -251,8 +274,8 @@ class InternalBoolean extends MainType {
 }
 
 class InternalArray extends MainType {
-  constructor(rule2, value, field) {
-    super(rule2, value, field);
+  constructor(rule2, value, field, target) {
+    super(rule2, value, field, target);
     this._message = {
       type: "%s is not a array",
       between: "%s length must be between %s and %s",
@@ -270,7 +293,7 @@ class InternalArray extends MainType {
         if (!isEmptyValue(this._value))
           this.validateTypes() && this.validateLen();
         if (this._rule.validator)
-          this.error.push(this._rule.validator(this._value));
+          this.error.push(this._rule.validator(this._value, this._target));
       }
     }
     return this.error.length === 0;
@@ -285,13 +308,14 @@ class InternalArray extends MainType {
 }
 
 class InternalString extends MainType {
-  constructor(rule2, value, field) {
-    super(rule2, value, field);
+  constructor(rule2, value, field, target) {
+    super(rule2, value, field, target);
     this._message = {
       type: "%s is not a string",
       between: "%s length must be between %s and %s",
       max: "%s length must be less than %s",
       min: "%s length must be greater than %s",
+      pattern: "%s does not match pattern",
       ...message
     };
   }
@@ -303,8 +327,10 @@ class InternalString extends MainType {
       this.validateRequired();
       if (!isEmptyValue(this._value))
         this.validateTypes() && this.validateLen();
+      if (this._rule.pattern)
+        this.validatePattern();
       if (this._rule.validator)
-        this.error.push(this._rule.validator(this._value));
+        this.error.push(this._rule.validator(this._value, this._target));
     }
     return this.error.length === 0;
   }
@@ -318,8 +344,8 @@ class InternalString extends MainType {
 }
 
 class InternalDate extends MainType {
-  constructor(rule2, value, field) {
-    super(rule2, value, field);
+  constructor(rule2, value, field, target) {
+    super(rule2, value, field, target);
     this._message = {
       type: "%s is not a date",
       between: "%s must be between %s and %s",
@@ -337,7 +363,7 @@ class InternalDate extends MainType {
       if (!isEmptyValue(this._value))
         this.validateTypes() && this.validateValue();
       if (this._rule.validator)
-        this.error.push(this._rule.validator(this._value));
+        this.error.push(this._rule.validator(this._value, this._target));
     }
     return this.error.length === 0;
   }
@@ -360,8 +386,8 @@ class InternalDate extends MainType {
 }
 
 class InternalEmail extends MainType {
-  constructor(rule2, value, field) {
-    super(rule2, value, field);
+  constructor(rule2, value, field, target) {
+    super(rule2, value, field, target);
     this._message = {
       type: "%s is not a email",
       ...message
@@ -375,8 +401,10 @@ class InternalEmail extends MainType {
       this.validateRequired();
       if (!isEmptyValue(this._value))
         this.validateTypes() && this.validateLen();
+      if (this._rule.pattern)
+        this.validatePattern();
       if (this._rule.validator)
-        this.error.push(this._rule.validator(this._value));
+        this.error.push(this._rule.validator(this._value, this._target));
     }
     return this.error.length === 0;
   }
@@ -390,8 +418,8 @@ class InternalEmail extends MainType {
 }
 
 class InternalUrl extends MainType {
-  constructor(rule2, value, field) {
-    super(rule2, value, field);
+  constructor(rule2, value, field, target) {
+    super(rule2, value, field, target);
     this._message = {
       type: "%s is not a url",
       ...message
@@ -405,8 +433,10 @@ class InternalUrl extends MainType {
       this.validateRequired();
       if (!isEmptyValue(this._value))
         this.validateTypes() && this.validateLen();
+      if (this._rule.pattern)
+        this.validatePattern();
       if (this._rule.validator)
-        this.error.push(this._rule.validator(this._value));
+        this.error.push(this._rule.validator(this._value, this._target));
     }
     return this.error.length === 0;
   }
@@ -419,7 +449,7 @@ class InternalUrl extends MainType {
   }
 }
 
-var typesValidator = {
+var TypesValidator = {
   number: InternalNumber,
   boolean: InternalBoolean,
   array: InternalArray,
@@ -520,9 +550,17 @@ class JobQueue {
     this.queueFlush();
     const p = this.currentFlushPromise;
     if (fn) {
-      p.then(this ? fn.bind(this) : fn, fn);
+      return p.then(this ? fn.bind(this) : fn, fn);
     }
     return p;
+  }
+  loopTick() {
+    this.currentFlushPromise.then(() => {
+      if (this.queue.length) {
+        this.nextTick();
+      }
+    }, () => {
+    });
   }
 }
 
@@ -537,7 +575,9 @@ class Validator {
     if (existingProxy) {
       this.proxy = existingProxy;
     } else {
-      this.proxy = new Proxy(refValue || this.initSource(rules), {
+      const source = refValue || this.initSource(rules);
+      source.error = {};
+      this.proxy = new Proxy(source, {
         set: this.set.bind(this)
       });
       proxyMap.set(rules, this.proxy);
@@ -551,26 +591,29 @@ class Validator {
     }, {});
   }
   set(target, key, value, proxy) {
-    if (target.hasOwnProperty(key)) {
+    if (key !== "error" && target.hasOwnProperty(key)) {
       let type = this._rules[key].find((rule) => rule.type)?.type ?? "string";
       let transform = this._rules[key].find((rule) => rule.transform)?.transform;
+      if (transform) {
+        value = transform(value);
+      }
       type || (type = "string");
       const validate = () => {
-        var _a;
-        const validator = new typesValidator[type](this._rules[key], value, key);
+        var _a, _b;
+        const validator = new TypesValidator[type](this._rules[key], value, key, target);
         if (!validator.validate()) {
           (_a = this._error)[key] || (_a[key] = []);
           this._error[key].push(...validator.error);
+          (_b = this.proxy["error"])[key] || (_b[key] = []);
+          this.proxy["error"][key].push(...validator.error);
           return this._error;
         }
       };
       const job = { field: key, validate };
       this.queue.queueJob(job);
-      if (transform) {
-        value = transform(value);
-      }
-      if (type === "string")
-        value.trim();
+      this.queue.loopTick();
+      if (type === "string" && typeOf(value) === "string")
+        value = String.prototype.trim.call(value);
       return Reflect.set(target, key, value, proxy);
     } else {
       throw Error(`${key} is not a valid property`);

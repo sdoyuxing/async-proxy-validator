@@ -6,11 +6,17 @@ export default class MainType implements ValidateType {
   protected _message: Obj = {};
   error: string[] = [];
   protected _rules: Rule[] = [];
-  protected _rule:Rule={}
+  protected _rule: Rule = {};
   protected _value: any;
   protected _field: string = "";
-  constructor(rule: Rule[], value: any, field: string) {
-    Object.assign(this, { _rules: rule, _value: value, _field: field });
+  protected _target: Obj={};
+  constructor(rule: Rule[], value: any, field: string, target: Obj) {
+    Object.assign(this, {
+      _rules: rule,
+      _value: value,
+      _field: field,
+      _target: target,
+    });
   }
   validate() {
     return true;
@@ -21,9 +27,9 @@ export default class MainType implements ValidateType {
       this.error.push(
         this._rule.message || messageFormat(this._message.required, this._field)
       );
-      return false
+      return false;
     }
-    return true
+    return true;
   }
   validateLen() {
     const { len, max, min } = this._rule;

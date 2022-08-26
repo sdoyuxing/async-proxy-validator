@@ -1,19 +1,19 @@
-# proxy-validator
+# async-proxy-validator
 
 异步验证表单字段，通过Proxy的方式实现表单验证，支持Proxy的浏览器才能使用。
 
 ## 安装
 
 ```bash
-npm i proxy-validator
+npm i async-proxy-validator
 ```
 
 ## 使用
 
-申明一个字段校验规则对象作为参数传给ProxyValidator，返回一个代理对象，对象中的属性赋值后通过validate方法获取校验结果信息。
+申明一个字段校验规则对象作为参数传给asyncProxyValidator，返回一个代理对象，对象中的属性赋值后通过validate方法获取校验结果信息。
 
 ```js
-import ProxyValidator from 'proxy-validator';
+import ProxyValidator from 'async-proxy-validator';
 var data = new ProxyValidator({
   name: {
     type: "number",
@@ -82,4 +82,5 @@ const descriptor = {
 #### 长度
 
 通过`len`属性设置长度，作用在`array`和`string`类型。
+
 

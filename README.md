@@ -1,6 +1,6 @@
 # async-proxy-validator
 
-异步验证表单字段，通过Proxy的方式实现表单验证，支持Proxy的浏览器才能使用。
+异步验证表单字段，通过 Proxy 的方式实现表单验证，支持 Proxy 的浏览器才能使用。
 
 ## 安装
 
@@ -10,18 +10,18 @@ npm i async-proxy-validator
 
 ## 使用
 
-申明一个字段校验规则对象作为参数传给asyncProxyValidator，返回一个代理对象，对象中的属性赋值后通过validate方法获取校验结果信息。
+申明一个字段校验规则对象作为参数传给 asyncProxyValidator，返回一个代理对象，对象中的属性赋值后通过 validate 方法获取校验结果信息。
 
 ```js
-import ProxyValidator from 'async-proxy-validator';
-var data = new ProxyValidator({
+import { asyncProxyValidator } from "async-proxy-validator";
+var { source, validate } = asyncProxyValidator({
   name: {
     type: "number",
-    required: true
+    required: true,
   },
 });
-data.source.name = '123';
-data.validate(function (data) {
+source.name = "123";
+validate(function (data) {
   console.log(data);
 });
 ```
@@ -34,9 +34,10 @@ data.validate(function (data) {
 function(): Promise
 ```
 
-返回会返回一个Promise对象:
-* `then()`，验证通过
-* `catch({ errors, fields })`，验证失败会返回失败信息和对应字段
+返回会返回一个 Promise 对象:
+
+- `then()`，验证通过
+- `catch({ errors, fields })`，验证失败会返回失败信息和对应字段
 
 ### Rules
 
@@ -45,8 +46,8 @@ function(): Promise
 ```js
 const descriptor = {
   email: [
-    { type: 'string', required: true, pattern: Schema.pattern.email },
-    { 
+    { type: "string", required: true, pattern: Schema.pattern.email },
+    {
       validator(rule, value, callback, source, options) {
         const errors = [];
         // test if email address already exists in a database
@@ -62,14 +63,14 @@ const descriptor = {
 
 检验器可以校验的类型有:
 
-* `string`: 字符串
-* `number`: 数字.
-* `boolean`: 布尔.
-* `array`: 数组.
-* `object`: 对象.
-* `date`: 日期
-* `url`: url地址.
-* `email`: 邮箱地址.
+- `string`: 字符串
+- `number`: 数字.
+- `boolean`: 布尔.
+- `array`: 数组.
+- `object`: 对象.
+- `date`: 日期
+- `url`: url 地址.
+- `email`: 邮箱地址.
 
 #### 必填
 
@@ -83,4 +84,43 @@ const descriptor = {
 
 通过`len`属性设置长度，作用在`array`和`string`类型。
 
+### 支持 vue3
 
+```js
+import { reactive, ref } from "vue";
+import { asyncProxyValidator } from "async-proxy-validator";
+
+defineProps<{ msg: string }>();
+
+const validator = asyncProxyValidator(
+  {
+    name: {
+      type: "string",
+      required: true,
+      message: "名称必填！",
+    },
+  },
+  reactive({ name: "" }),
+  reactive({ name: "" })
+);
+
+const { source: form, validate, error: errorMessage } = validator;
+
+const count = ref(0);
+
+const handleClick = () => {
+  validator.validate((data: any) => {
+    console.log(data);
+  });
+};
+```
+
+```html
+<template>
+  <div>
+    <input type="text" v-model="form.name" />
+    <div>{{ errorMessage.name }}</div>
+    <button @click="handleClick">验证</button>
+  </div>
+</template>
+```

@@ -62,14 +62,10 @@ interface ValidateOptions {
     messages: ValidateMessages;
 }
 
-declare class ProxyValidator {
+declare function asyncProxyValidator(rules: Rules, refValue?: any, refError?: any, options?: ValidateOptions): {
     source: Obj;
-    private _rules;
-    private _validator;
-    constructor(rules: Rules, refValue?: any, options?: ValidateOptions);
-    get rules(): Rules;
-    set rules(value: Rules);
+    error: Obj;
     validate(fn: any): Promise<void>;
-}
+};
 
-export { ProxyValidator as default };
+export { asyncProxyValidator };

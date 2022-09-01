@@ -67,6 +67,9 @@ export class JobQueue {
       this.queue.enqueue(job);
     }
   }
+  queueFind(field:string){
+    return this.queue.find(field);
+  }
   queueFlush() {
     const implementQueue = new Queue<Job>();
     implementQueue.enqueue([...this.queue]);
@@ -87,15 +90,10 @@ export class JobQueue {
         for (let queueItem of implementQueue) {
           result = queueItem.validate()!;
         }
-      } catch (error) {
-        console.error(error);
-        throw error;
+      } catch (e) {
+        console.error(e);
+        throw e;
       }
-      error = deepCopy(result);
-      for (let key in result) {
-        result[key].length = 0;
-      }
-      if (error) throw error;
     }
   }
   nextTick(fn?: () => void): Promise<void> {
@@ -113,7 +111,11 @@ export class JobQueue {
           this.nextTick();
         }
       },
-      () => {}
+      () => {
+        if (this.queue.length) {
+          this.nextTick();
+        }
+      }
     );
   }
 }

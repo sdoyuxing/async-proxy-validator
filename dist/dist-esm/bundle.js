@@ -514,6 +514,9 @@ class JobQueue {
       this.queue.enqueue(job);
     }
   }
+  queueFind(field) {
+    return this.queue.find(field);
+  }
   queueFlush() {
     const implementQueue = new Queue();
     implementQueue.enqueue([...this.queue]);
@@ -529,21 +532,14 @@ class JobQueue {
   flushJobs(implementQueue) {
     if (implementQueue.length > 0) {
       let result = {};
-      let error;
       try {
         for (let queueItem of implementQueue) {
           result = queueItem.validate();
         }
-      } catch (error2) {
-        console.error(error2);
-        throw error2;
+      } catch (e) {
+        console.error(e);
+        throw e;
       }
-      error = deepCopy(result);
-      for (let key in result) {
-        result[key].length = 0;
-      }
-      if (error)
-        throw error;
     }
   }
   nextTick(fn) {
@@ -560,15 +556,18 @@ class JobQueue {
         this.nextTick();
       }
     }, () => {
+      if (this.queue.length) {
+        this.nextTick();
+      }
     });
   }
 }
 
 const proxyMap = /* @__PURE__ */ new WeakMap();
 class Validator {
-  constructor(rules, refValue) {
+  constructor(rules, refValue, refError) {
     this._rules = {};
-    this._error = {};
+    this.error = {};
     this.queue = new JobQueue();
     this._rules = rules;
     const existingProxy = proxyMap.get(rules);
@@ -576,7 +575,7 @@ class Validator {
       this.proxy = existingProxy;
     } else {
       const source = refValue || this.initSource(rules);
-      source.error = {};
+      this.error = refError || this.error;
       this.proxy = new Proxy(source, {
         set: this.set.bind(this)
       });
@@ -599,14 +598,12 @@ class Validator {
       }
       type || (type = "string");
       const validate = () => {
-        var _a, _b;
         const validator = new TypesValidator[type](this._rules[key], value, key, target);
         if (!validator.validate()) {
-          (_a = this._error)[key] || (_a[key] = []);
-          this._error[key].push(...validator.error);
-          (_b = this.proxy["error"])[key] || (_b[key] = []);
-          this.proxy["error"][key].push(...validator.error);
-          return this._error;
+          this.error[key] = validator.error.join();
+          return this.error;
+        } else {
+          this.error[key] = "";
         }
       };
       const job = { field: key, validate };
@@ -614,38 +611,41 @@ class Validator {
       this.queue.loopTick();
       if (type === "string" && typeOf(value) === "string")
         value = String.prototype.trim.call(value);
-      return Reflect.set(target, key, value, proxy);
+      return proxy ? Reflect.set(target, key, value, proxy) : true;
     } else {
       throw Error(`${key} is not a valid property`);
     }
   }
 }
 
-class ProxyValidator {
-  constructor(rules, refValue, options) {
-    this.source = {};
-    this._rules = {};
-    this.rules = rules;
-    this._validator = new Validator(this._rules, refValue);
-    this.source = this._validator.proxy;
+function validateRules(rules) {
+  if (typeOf(rules) === void 0 || typeOf(rules) === null)
+    throw new Error("ProxyValidator configuration parameter cannot be empty");
+  if (typeOf(rules) !== "object" || typeOf(rules) === "array")
+    throw new Error("ProxyValidator configuration parameter must be an object");
+  const internalRules = deepCopy(rules);
+  for (let key in internalRules) {
+    if (!Array.isArray(internalRules[key]))
+      internalRules[key] = [internalRules[key]];
   }
-  get rules() {
-    return this._rules;
-  }
-  set rules(value) {
-    if (typeOf(value) === void 0 || typeOf(value) === null)
-      throw new Error("ProxyValidator configuration parameter cannot be empty");
-    if (typeOf(value) !== "object" || typeOf(value) === "array")
-      throw new Error("ProxyValidator configuration parameter must be an object");
-    this._rules = deepCopy(value);
-    for (let key in this._rules) {
-      if (!Array.isArray(this._rules[key]))
-        this._rules[key] = [this._rules[key]];
+  return internalRules;
+}
+function asyncProxyValidator(rules, refValue, refError, options) {
+  const internalRules = validateRules(rules);
+  const internalValidator = new Validator(internalRules, refValue, refError);
+  return {
+    source: internalValidator.proxy,
+    error: internalValidator.error,
+    validate(fn) {
+      debugger;
+      for (let key in internalRules) {
+        if (internalRules.hasOwnProperty(key) && !internalValidator.queue.queueFind(key)) {
+          internalValidator.set(internalValidator.proxy, key, internalValidator.proxy[key]);
+        }
+      }
+      return internalValidator.queue.nextTick(fn);
     }
-  }
-  validate(fn) {
-    return this._validator.queue.nextTick(fn);
-  }
+  };
 }
 
-export { ProxyValidator as default };
+export { asyncProxyValidator };

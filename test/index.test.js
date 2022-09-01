@@ -1,7 +1,7 @@
-const ProxyValidator = require("../dist/dist-web/bundle");
+const { asyncProxyValidator } = require("../dist/dist-web/bundle");
 
 test("test url", () => {
-  const validator = new ProxyValidator({
+  const validator = asyncProxyValidator({
     v: {
       type: "url",
       message: "v必须是url地址",
@@ -18,7 +18,7 @@ test("test url", () => {
 });
 
 test("test required", () => {
-  const validator = new ProxyValidator(
+  const validator = asyncProxyValidator(
     {
       v: {
         required: true,
@@ -39,7 +39,7 @@ test("test required", () => {
 });
 
 test("test number", () => {
-  const validator = new ProxyValidator({
+  const validator = asyncProxyValidator({
     v: [
       {
         type: "number",
@@ -71,7 +71,7 @@ test("test number", () => {
 });
 
 test("test number between", () => {
-  const validator = new ProxyValidator({
+  const validator = asyncProxyValidator({
     v: [
       {
         type: "number",
@@ -87,7 +87,7 @@ test("test number between", () => {
 });
 
 test("test string", () => {
-  const validator = new ProxyValidator({
+  const validator = asyncProxyValidator({
     v: [
       {
         type: "string",
@@ -107,7 +107,7 @@ test("test string", () => {
     expect(data.v.join()).toBe("v length must be 6");
   });
 
-  const validator1 = new ProxyValidator({
+  const validator1 = asyncProxyValidator({
     v: [
       {
         type: "string",
@@ -126,7 +126,7 @@ test("test string", () => {
     expect(data.v.join()).toBe("v长度要不小于2");
   });
 
-  const validator2 = new ProxyValidator({
+  const validator2 = asyncProxyValidator({
     v: [
       {
         type: "string",
@@ -143,7 +143,7 @@ test("test string", () => {
 });
 
 test("test array", () => {
-  const validator = new ProxyValidator({
+  const validator = asyncProxyValidator({
     v: [
       { type: "array", message: "v必须是数组" },
       { len: 6, message: "v长度必须是6" },
@@ -158,7 +158,7 @@ test("test array", () => {
     expect(data.v.join()).toBe("v长度必须是6");
   });
 
-  const validator1 = new ProxyValidator({
+  const validator1 = asyncProxyValidator({
     v: [
       { type: "array", message: "v必须是数组" },
       { max: 6, message: "v最大长度为6" },
@@ -173,7 +173,7 @@ test("test array", () => {
   validator1.validate((data) => {
     expect(data.v.join()).toBe("v最小长度为2");
   });
-  const validator2 = new ProxyValidator({
+  const validator2 = asyncProxyValidator({
     v: [
       { type: "array", message: "v必须是数组" },
       { max: 6, min: 2, message: "v最大长度在6和2之间" },
@@ -186,7 +186,7 @@ test("test array", () => {
 });
 
 test("test boolean", () => {
-  const validator = new ProxyValidator({
+  const validator = asyncProxyValidator({
     v: [{ type: "boolean", message: "v必须是布尔值" }],
   });
   validator.source.v = 12;
@@ -196,7 +196,7 @@ test("test boolean", () => {
 });
 
 test("test Date", () => {
-  const validator = new ProxyValidator({
+  const validator = asyncProxyValidator({
     v: [
       { type: "date", message: "v必须是日期类型" },
       {
@@ -218,7 +218,7 @@ test("test Date", () => {
   validator.validate((data) => {
     expect(data.v.join()).toBe("v必须大于昨天");
   });
-  const validator1 = new ProxyValidator({
+  const validator1 = asyncProxyValidator({
     v: [
       { type: "date", message: "v必须是日期类型" },
       {
@@ -235,7 +235,7 @@ test("test Date", () => {
 });
 
 test("test email", () => {
-  const validator = new ProxyValidator({
+  const validator = asyncProxyValidator({
     v: [{ type: "email", message: "v必须是email" }],
   });
   validator.source.v = "123";
@@ -245,7 +245,7 @@ test("test email", () => {
 });
 
 test("test transform", () => {
-  const validator = new ProxyValidator({
+  const validator = asyncProxyValidator({
     v: [
       { type: "number", message: "v必须是数字", transform: (val) => val * 10 },
     ],
@@ -255,7 +255,7 @@ test("test transform", () => {
 });
 
 test("test pattern", () => {
-  const validator = new ProxyValidator({
+  const validator = asyncProxyValidator({
     v: [{ type: "string" }, { pattern: "^d{5}$", message: "只能是五位数字" }],
   });
   validator.source.v = "1234";
@@ -265,7 +265,7 @@ test("test pattern", () => {
 });
 
 test("test error", () => {
-  const validaotor = new ProxyValidator({ v: [{ type: "string" }] });
+  const validaotor = asyncProxyValidator({ v: [{ type: "string" }] });
   validaotor.source.v = "123";
   validaotor
     .validate((data) => {
@@ -280,7 +280,7 @@ test("test error", () => {
 });
 
 test("test source error", () => {
-  const validaotor = new ProxyValidator({ v: [{ type: "string" }] });
+  const validaotor = asyncProxyValidator({ v: [{ type: "string" }] });
   validaotor.source.v = 123;
   validaotor.validate((data) => {
     expect(validaotor.source.error.v[0]).toBe("v is not a string");
@@ -288,7 +288,7 @@ test("test source error", () => {
 });
 
 test("test linkage field", () => {
-  const validaotor = new ProxyValidator({
+  const validaotor = asyncProxyValidator({
     v: [
       {
         type: "number",

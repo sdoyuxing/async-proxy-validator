@@ -1438,6 +1438,13 @@ argparse@^1.0.7:
   dependencies:
     sprintf-js "~1.0.2"
 
+async-proxy-validator@^0.1.2:
+  version "0.1.3"
+  resolved "https://registry.yarnpkg.com/async-proxy-validator/-/async-proxy-validator-0.1.3.tgz#0e1d1b2516f71d64b7f7d8fe67ac0e3a082be37a"
+  integrity sha512-le2iltnrNqYSs6J89UvzjqhbdveREa5xJP/d2ta140PUt4xeBEoKYMDh9bmBmzqUpjtVZ7zCFnYskcgKZvYWsg==
+  dependencies:
+    async-proxy-validator "^0.1.2"
+
 babel-jest@^28.1.2:
   version "28.1.2"
   resolved "https://registry.npmmirror.com/babel-jest/-/babel-jest-28.1.2.tgz#2b37fb81439f14d34d8b2cc4a4bd7efabf9acbfe"

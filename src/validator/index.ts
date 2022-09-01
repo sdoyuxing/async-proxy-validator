@@ -7,8 +7,8 @@ class Validator {
   proxy: Obj;
   queue: JobQueue;
   private _rules: Rules = {};
-  private _error: Obj = {};
-  constructor(rules: Rules, refValue?: any) {
+  error: Obj = {};
+  constructor(rules: Rules, refValue?: any, refError?: any) {
     this.queue = new JobQueue();
     this._rules = rules;
     const existingProxy = proxyMap.get(rules);
@@ -16,7 +16,7 @@ class Validator {
       this.proxy = existingProxy;
     } else {
       const source = refValue || this.initSource(rules);
-      source.error = {};
+      this.error = refError || this.error;
       this.proxy = new Proxy<Obj>(source, {
         set: this.set.bind(this),
       });
@@ -30,7 +30,7 @@ class Validator {
       return source;
     }, {});
   }
-  set(target: Obj, key: string, value: any, proxy: any): boolean {
+  set(target: Obj, key: string, value: any, proxy?: any): boolean {
     if (key !== "error" && target.hasOwnProperty(key)) {
       let type =
         (<Rule[]>this._rules[key]).find((rule) => rule.type)?.type ?? "string";
@@ -49,20 +49,19 @@ class Validator {
           target
         );
         if (!validator.validate()) {
-          this._error[key] ||= [];
-          this._error[key].push(...validator.error);
-          this.proxy["error"][key] ||= [];
-          this.proxy["error"][key].push(...validator.error);
-          return this._error;
+          this.error[key] = validator.error.join();
+          return this.error;
+        } else {
+          this.error[key] = "";
         }
       };
       const job = { field: key, validate };
       this.queue.queueJob(job);
       this.queue.loopTick();
-  
+
       if (type === "string" && typeOf(value) === "string")
         value = String.prototype.trim.call(value);
-      return Reflect.set(target, key, value, proxy);
+      return proxy ? Reflect.set(target, key, value, proxy) : true;
     } else {
       throw Error(`${key} is not a valid property`);
     }

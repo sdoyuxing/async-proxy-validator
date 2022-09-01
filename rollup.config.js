@@ -10,8 +10,7 @@ export default [
     output: {
       file: path.resolve(__dirname, "dist/dist-web/bundle.js"),
       name: "bundle",
-      format: "umd",
-      exports: "default",
+      format: "umd"
     },
     plugins: [
       esbuild({
